@@ -21,9 +21,9 @@ type feedbackSender struct {
 func (f *feedbackSender) send(fb []byte) error {
 	f.objectID++
 	return f.feedback.WriteObject(context.Background(), moqtransport.Object{
-		GroupID:              0,
-		ObjectID:             f.objectID,
-		ObjectSendOrder:      0,
+		GroupID:  0,
+		ObjectID: f.objectID,
+		// ObjectSendOrder:      0,
 		ForwardingPreference: moqtransport.ObjectForwardingPreferenceStreamGroup,
 		Payload:              fb,
 	})
@@ -43,7 +43,7 @@ func newSender() *sender {
 		cancelCtx: cancel,
 		encoder:   nil,
 		fbs: &feedbackSender{
-			feedback: moqtransport.NewLocalTrack(0, "feedback", "bitrate"),
+			feedback: moqtransport.NewLocalTrack("feedback", "bitrate"),
 		},
 	}
 }
@@ -117,7 +117,7 @@ func (h *sender) gstreamerSubscriptionHandler(_ *moqtransport.Session, sub *moqt
 		srw.Reject(0, errors.New("unknown trackname").Error())
 		return
 	}
-	localTrack := moqtransport.NewLocalTrack(sub.TrackAlias, sub.Namespace, sub.TrackName)
+	localTrack := moqtransport.NewLocalTrack(sub.Namespace, sub.TrackName)
 
 	pipeline, err := gst.NewPipeline("")
 	if err != nil {
@@ -157,9 +157,9 @@ func (h *sender) gstreamerSubscriptionHandler(_ *moqtransport.Session, sub *moqt
 			defer buffer.Unmap()
 
 			if err := localTrack.WriteObject(h.ctx, moqtransport.Object{
-				GroupID:              0, // TODO
-				ObjectID:             0, // TODO
-				ObjectSendOrder:      0, // TODO
+				GroupID:  0, // TODO
+				ObjectID: 0, // TODO
+				// ObjectSendOrder:      0, // TODO
 				ForwardingPreference: moqtransport.ObjectForwardingPreferenceStream,
 				Payload:              samples,
 			}); err != nil {
@@ -183,7 +183,7 @@ func (h *sender) ffmpegSubscriptionHandler(_ *moqtransport.Session, sub *moqtran
 		srw.Reject(0, err.Error())
 		return
 	}
-	localTrack := moqtransport.NewLocalTrack(sub.TrackAlias, sub.Namespace, sub.TrackName)
+	localTrack := moqtransport.NewLocalTrack(sub.Namespace, sub.TrackName)
 	defer localTrack.Close()
 	ffmpeg := exec.Command(
 		"ffmpeg",
@@ -219,9 +219,9 @@ func (h *sender) ffmpegSubscriptionHandler(_ *moqtransport.Session, sub *moqtran
 			return
 		}
 		if err := localTrack.WriteObject(h.ctx, moqtransport.Object{
-			GroupID:              groupID,
-			ObjectID:             objectID,
-			ObjectSendOrder:      0,
+			GroupID:  groupID,
+			ObjectID: objectID,
+			// ObjectSendOrder:      0,
 			ForwardingPreference: moqtransport.ObjectForwardingPreferenceStreamTrack,
 			Payload:              buf[:n],
 		}); err != nil {
